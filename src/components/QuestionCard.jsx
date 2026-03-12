@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 
-const DIFF_LABEL = { basic: "기본", hard: "심화" };
+const DIFF_LABEL = { basic: "기본", hard: "심화", expert: "보너스" };
 const DIFF_STYLE = {
   basic: "bg-sky-100 text-sky-700",
   hard: "bg-rose-100 text-rose-700",
+  expert: "bg-amber-100 text-amber-700",
 };
 const TYPE_LABEL = { choice: "선택형", essay: "서술형" };
 
@@ -153,6 +154,11 @@ export default function QuestionCard({
         <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
           {TYPE_LABEL[q.type] || q.type}
         </span>
+        {q.perspectiveTag && (
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-teal-100 text-teal-700">
+            {q.perspectiveTag}
+          </span>
+        )}
         {q.sessionNumber && (
           <span className="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-600">
             {q.sessionNumber}회차
@@ -307,6 +313,30 @@ export default function QuestionCard({
               <span className="text-xs font-semibold text-amber-600">참고</span>
               <div className="mt-1 bg-amber-50 rounded-lg px-3 py-2" style={{ borderLeft: "3px solid #fbbf24" }}>
                 <p className="text-sm text-gray-700 leading-relaxed"><Highlight text={q.note} /></p>
+              </div>
+            </div>
+          )}
+
+          {/* 상세 해설 (explanation) */}
+          {q.explanation && (
+            <div className="mb-2">
+              <span className="text-xs font-semibold text-emerald-600">상세 해설</span>
+              <div className="mt-1 bg-emerald-50 rounded-lg px-3 py-2" style={{ borderLeft: "3px solid #34d399" }}>
+                <p className="text-sm text-gray-700 leading-relaxed"><Highlight text={q.explanation} /></p>
+              </div>
+            </div>
+          )}
+
+          {/* 핵심 개념 (concepts) */}
+          {q.concepts && q.concepts.length > 0 && (
+            <div className="mb-2">
+              <span className="text-xs font-semibold text-indigo-600">핵심 개념</span>
+              <div className="mt-1 grid gap-1.5">
+                {q.concepts.map((concept, ci) => (
+                  <div key={ci} className="bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-100">
+                    <p className="text-sm text-gray-700 leading-relaxed">{concept}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}

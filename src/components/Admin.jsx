@@ -145,7 +145,7 @@ export default function Admin() {
       }
       const nextSession = lastSession + 1;
       const date = data.date || new Date().toISOString().split("T")[0];
-      const catDist = {}, diffDist = { basic: 0, hard: 0 }, typeDist = { choice: 0, essay: 0 };
+      const catDist = {}, diffDist = { basic: 0, hard: 0, expert: 0 }, typeDist = { choice: 0, essay: 0 };
       data.questions.forEach((q) => {
         catDist[q.category || "?"] = (catDist[q.category || "?"] || 0) + 1;
         if (q.difficulty) diffDist[q.difficulty] = (diffDist[q.difficulty] || 0) + 1;
@@ -288,6 +288,9 @@ export default function Admin() {
               <div className="flex flex-wrap gap-1.5">
                 <span className="text-sm bg-sky-50 text-sky-700 px-3 py-1 rounded-lg">기본: {preview.diffDist.basic || 0}</span>
                 <span className="text-sm bg-rose-50 text-rose-700 px-3 py-1 rounded-lg">심화: {preview.diffDist.hard || 0}</span>
+                {preview.diffDist.expert > 0 && (
+                  <span className="text-sm bg-amber-50 text-amber-700 px-3 py-1 rounded-lg">보너스: {preview.diffDist.expert}</span>
+                )}
               </div>
             </div>
             <div>

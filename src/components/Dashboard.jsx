@@ -37,12 +37,18 @@ const CHART_COLORS = [
   "#10b981", "#ef4444", "#ec4899", "#6366f1",
 ];
 
+const CHART_COLORS_ALT = [
+  "#60a5fa", "#22d3ee", "#a78bfa", "#fbbf24",
+  "#34d399", "#f87171", "#f472b6", "#818cf8",
+];
+
 export default function Dashboard() {
   const [tab, setTab] = useState(0);
   const [sessions, setSessions] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [catFilter, setCatFilter] = useState("전체");
   const [sessionFilter, setSessionFilter] = useState("전체");
+  const [historyCopied, setHistoryCopied] = useState(false);
 
   useEffect(() => {
     const q1 = query(collection(db, "quiz_sessions"), orderBy("session", "desc"));
@@ -58,7 +64,22 @@ export default function Dashboard() {
 
   const currentSession = sessions[0] || null;
 
-  // Category distribution (deduplicated)
+  // 출제 범주 분포 (quiz_sessions 기준)
+  const publishedCatCounts = {};
+  let totalPublished = 0;
+  const allPerspectiveTags = new Set();
+  sessions.forEach((s) => {
+    (s.questions || []).forEach((q) => {
+      publishedCatCounts[q.category || "?"] = (publishedCatCounts[q.category || "?"] || 0) + 1;
+      totalPublished++;
+      if (q.perspectiveTag) allPerspectiveTags.add(q.perspectiveTag);
+    });
+  });
+  const publishedChartData = Object.entries(CATEGORIES).map(([code, name]) => ({
+    name: code, fullName: name, count: publishedCatCounts[code] || 0,
+  }));
+
+  // Category distribution (deduplicated bookmarks)
   const catCounts = {};
   const seenBookmark = new Set();
   bookmarks.forEach((b) => {
@@ -66,12 +87,31 @@ export default function Dashboard() {
     if (!seenBookmark.has(key)) {
       seenBookmark.add(key);
       catCounts[b.category || "?"] = (catCounts[b.category || "?"] || 0) + 1;
+      if (b.perspectiveTag) allPerspectiveTags.add(b.perspectiveTag);
     }
   });
   const chartData = Object.entries(CATEGORIES).map(([code, name]) => ({
     name: code, fullName: name, count: catCounts[code] || 0,
   }));
   const totalBookmarkCount = Object.values(catCounts).reduce((a, b) => a + b, 0);
+
+  // 출제 이력 복사
+  const copyHistory = () => {
+    const maxSession = sessions.length > 0 ? Math.max(...sessions.map((s) => s.session)) : 0;
+    const pubLine = Object.entries(CATEGORIES)
+      .map(([code]) => `${code} ${publishedCatCounts[code] || 0}문항`)
+      .join(", ");
+    const bmLine = Object.entries(CATEGORIES)
+      .map(([code]) => `${code} ${catCounts[code] || 0}문항`)
+      .join(", ");
+    let text = `=== 출제 이력 (1~${maxSession}회차) ===\n총 출제: ${totalPublished}문항\n범주별 출제 수: ${pubLine}\n범주별 저장(복습) 수: ${bmLine}`;
+    if (allPerspectiveTags.size > 0) {
+      text += `\n출제된 관점 태그: ${[...allPerspectiveTags].sort().join(", ")}`;
+    }
+    navigator.clipboard.writeText(text);
+    setHistoryCopied(true);
+    setTimeout(() => setHistoryCopied(false), 2000);
+  };
 
   // Filtered bookmarks (deduplicated)
   const deduped = [];
@@ -130,6 +170,22 @@ export default function Dashboard() {
       {/* 진행 현황 */}
       {tab === 0 && (
         <div className="space-y-6">
+          {/* 출제 이력 복사 버튼 */}
+          {sessions.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={copyHistory}
+                className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+                  historyCopied
+                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                    : "bg-gray-800 text-white hover:bg-gray-900"
+                }`}
+              >
+                {historyCopied ? "복사됨!" : "출제 이력 복사"}
+              </button>
+            </div>
+          )}
+
           {currentSession ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-5">
@@ -187,7 +243,28 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Chart */}
+          {/* 출제 범주 분포 차트 */}
+          {totalPublished > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-bold text-gray-800 text-lg mb-1">출제 문항 범주별 분포</h3>
+              <p className="text-sm text-gray-400 mb-5">총 {totalPublished}개 출제 문항 (전 회차 누적)</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={publishedChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="name" tick={{ fontSize: 14 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+                  <Tooltip formatter={(value, _name, props) => [`${value}건`, props.payload.fullName]} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {publishedChartData.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS_ALT[i % CHART_COLORS_ALT.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* 저장 문항 범주 분포 차트 */}
           {totalBookmarkCount > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-800 text-lg mb-1">저장 문항 범주별 분포</h3>

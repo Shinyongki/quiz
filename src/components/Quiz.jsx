@@ -66,6 +66,8 @@ export default function Quiz() {
   }, [session, name]);
 
   const questions = session?.questions || [];
+  const mainQuestions = questions.filter((q) => q.difficulty !== "expert");
+  const expertQuestions = questions.filter((q) => q.difficulty === "expert");
   const total = questions.length;
   // 진행률 = 답안 선택 OR 정답 보기 중 하나라도 한 문항
   const doneIds = new Set([...revealedIds, ...answeredIds]);
@@ -118,6 +120,9 @@ export default function Quiz() {
       page: q.page || "",
       note: q.note || "",
       related: q.related || null,
+      perspectiveTag: q.perspectiveTag || null,
+      explanation: q.explanation || null,
+      concepts: q.concepts || null,
       savedAt: serverTimestamp(),
     });
     setBookmarkedIds(new Set(bookmarkedIds).add(q.id));
@@ -172,21 +177,50 @@ export default function Quiz() {
         )}
       </div>
 
-      {/* Questions - 2열 그리드 (PC), 1열 (모바일) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {questions.map((q, i) => (
-          <QuestionCard
-            key={q.id}
-            q={q}
-            index={i}
-            revealed={revealedIds.has(q.id)}
-            bookmarked={bookmarkedIds.has(q.id)}
-            onReveal={handleReveal}
-            onAnswer={handleAnswer}
-            onBookmark={handleBookmark}
-          />
-        ))}
-      </div>
+      {/* Main Questions - 2열 그리드 (PC), 1열 (모바일) */}
+      {mainQuestions.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {mainQuestions.map((q, i) => (
+            <QuestionCard
+              key={q.id}
+              q={q}
+              index={i}
+              revealed={revealedIds.has(q.id)}
+              bookmarked={bookmarkedIds.has(q.id)}
+              onReveal={handleReveal}
+              onAnswer={handleAnswer}
+              onBookmark={handleBookmark}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Expert (보너스) Questions */}
+      {expertQuestions.length > 0 && (
+        <>
+          <div className="mt-8 mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-amber-200" />
+            <span className="text-base font-bold text-amber-600 px-4 py-1.5 bg-amber-50 rounded-full border border-amber-200">
+              보너스 문제 ({expertQuestions.length}문항)
+            </span>
+            <div className="h-px flex-1 bg-amber-200" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {expertQuestions.map((q, i) => (
+              <QuestionCard
+                key={q.id}
+                q={q}
+                index={mainQuestions.length + i}
+                revealed={revealedIds.has(q.id)}
+                bookmarked={bookmarkedIds.has(q.id)}
+                onReveal={handleReveal}
+                onAnswer={handleAnswer}
+                onBookmark={handleBookmark}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Bottom nav */}
       <div className="mt-8 text-center">
