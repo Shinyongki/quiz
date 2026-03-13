@@ -99,13 +99,7 @@ quiz_bookmarks
 
 ```javascript
 // src/config/members.js
-export const MEMBERS = [
-  "홍길동",
-  "김철수",
-  "이영희",
-  "박민준",
-  "최수진"
-];
+export const MEMBERS = ["이연숙", "이정혜", "박지영", "권기현", "신용기"];
 ```
 
 팀원 이름 변경 시 이 파일만 수정.
