@@ -298,13 +298,13 @@ export default function QuestionCard({
               <div className="mt-1 bg-white rounded-lg pl-3 pr-2 py-2" style={{ borderLeft: "3px solid #93c5fd" }}>
                 <p className="text-sm text-gray-700 leading-relaxed"><Highlight text={q.basis} /></p>
                 {q.page && (
-                  <p className="text-xs text-gray-400 mt-1">— 사업안내 {q.page}</p>
+                  <p className="text-xs text-gray-400 mt-1">— {q.page}</p>
                 )}
               </div>
             </div>
           )}
           {!q.basis && q.page && (
-            <p className="text-xs text-gray-400 mb-1">— 사업안내 {q.page}</p>
+            <p className="text-xs text-gray-400 mb-1">— {q.page}</p>
           )}
 
           {/* 보충 설명 (note) */}
