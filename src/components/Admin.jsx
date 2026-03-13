@@ -164,7 +164,7 @@ export default function Admin() {
       for (const q of data.questions) {
         if (!q.id || !q.question || !q.answer) { setError(`문항 ${q.id || "?"}에 id, question, answer가 필요합니다.`); return; }
       }
-      const nextSession = lastSession + 1;
+      const nextSession = data.session || lastSession + 1;
       const date = data.date || new Date().toISOString().split("T")[0];
       const catDist = {}, diffDist = { basic: 0, hard: 0, expert: 0 }, typeDist = { choice: 0, essay: 0 };
       data.questions.forEach((q) => {
