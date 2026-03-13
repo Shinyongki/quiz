@@ -121,6 +121,7 @@ export default function Quiz() {
       note: q.note || "",
       related: q.related || null,
       perspectiveTag: q.perspectiveTag || null,
+      expertConditions: q.expertConditions || null,
       explanation: q.explanation || null,
       concepts: q.concepts || null,
       savedAt: serverTimestamp(),

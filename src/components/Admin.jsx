@@ -18,6 +18,7 @@ const SAMPLE_JSON = `{
       "id": "q1",
       "category": "E",
       "categoryName": "종결·사후관리",
+      "perspectiveTag": "E-자동종결대상",
       "difficulty": "hard",
       "type": "choice",
       "question": "서비스 종결 시 자동종결 대상에 해당하는 것은?",
@@ -32,25 +33,16 @@ const SAMPLE_JSON = `{
       "page": "p.57",
       "note": "**자동종결·심의생략·협의체심의** 3가지 종결 유형을 구분할 것",
       "related": [
-        {
-          "title": "자동종결",
-          "items": ["이용자 사망"]
-        },
-        {
-          "title": "심의 생략 (시·군·구 승인)",
-          "items": ["서비스 거부", "장기간(90일+) 중지", "자격상실(나이·소득·유사중복)", "타 서비스 이용"]
-        },
-        {
-          "title": "협의체 심의 대상",
-          "highlight": true,
-          "items": ["재사정 결과 부적합", "종사자 안전상의 이유"]
-        }
+        { "title": "자동종결", "items": ["이용자 사망"] },
+        { "title": "심의 생략 (시·군·구 승인)", "items": ["서비스 거부", "장기간(90일+) 중지"] },
+        { "title": "협의체 심의 대상", "highlight": true, "items": ["재사정 결과 부적합", "종사자 안전상의 이유"] }
       ]
     },
     {
-      "id": "q2",
+      "id": "q9",
       "category": "A",
       "categoryName": "서비스 대상·자격",
+      "perspectiveTag": "A-서술형예시",
       "difficulty": "hard",
       "type": "essay",
       "question": "서술형 문제 내용",
@@ -58,60 +50,89 @@ const SAMPLE_JSON = `{
       "basis": "근거 원문 인용",
       "page": "p.43",
       "note": "보충 설명"
+    },
+    {
+      "id": "q11",
+      "category": "C",
+      "categoryName": "인력·급여·근무",
+      "perspectiveTag": "C-보너스예시",
+      "difficulty": "expert",
+      "type": "choice",
+      "question": "보너스 문제 내용 (교차 참조·비교 판단 필요)",
+      "options": ["① ...", "② ...", "③ ...", "④ ..."],
+      "answer": "③ **정답 내용**",
+      "basis": "사업안내 p.00 + 서비스제공매뉴얼 p.00",
+      "page": "p.00",
+      "note": "보충 설명",
+      "expertConditions": ["① 교차 참조", "③ 비교 판단"],
+      "explanation": "① 정답 근거: ... / ② 오답 이유: ... / ③ 오답 이유: ... / ④ 오답 이유: ...",
+      "concepts": ["개념1: 설명", "개념2: 설명", "개념3: 설명"]
     }
   ]
 }`;
 
-const PROMPT_TEMPLATE = `2026 노인맞춤돌봄서비스 사업안내 기반으로
-N회차 퀴즈 JSON을 아래 형식으로 생성해줘.
+const PROMPT_TEMPLATE = `N회차 퀴즈 JSON 생성해줘.
+session: N
+date: 오늘 날짜
 
-구성:
-- 기본 문제(선택형) 5문항: 범주 A~H 혼합
-- 어려운 문제(선택형) 3문항: 조건 분기·변경사항·예외규정 중심
-- 어려운 문제(서술형) 2문항: 실무 사례형
+【문항 구성 — 총 15문항】
+- q1~q5: 기본 문제(선택형) — 핵심 수치·기준·정의 (difficulty: "basic")
+- q6~q8: 어려운 문제(선택형) — 조건 분기·변경사항·예외규정 (difficulty: "hard")
+- q9~q10: 어려운 문제(서술형) — 실무 사례형 (difficulty: "hard")
+- q11~q15: 보너스 문제(선택형) — 교차참조·법령연계·비교판단·다단계추론 (difficulty: "expert")
 
-규칙:
-- basis: 사업안내 원문을 그대로 인용
+【공통 규칙】
+- perspectiveTag: 각 문항의 출제 관점 태그 필수 (예: "A-연령기준")
+- basis: 사업안내 원문 그대로 인용
 - page: 사업안내 문서 하단 페이지 번호
-- note: 간단한 보충 설명 (필수)
-- related: 혼동하기 쉬운 규정을 분류별로 비교 표시 (해당되는 문항만). highlight:true는 특히 주의할 항목.
-- answer, basis, note 텍스트에서 핵심 용어는 **별표** 로 감싸기 (예: **자동종결 대상**). 화면에 노란 하이라이트로 표시됨.
+- note: 간단한 보충 설명 (모든 문항 필수)
+- related: 혼동하기 쉬운 규정 비교 (해당 문항만). highlight:true는 주의 항목
+- answer, basis, note 핵심 용어는 **별표**로 감싸기 → 앱에서 노란 하이라이트 표시
 
-출력 형식:
+【expert 추가 필드】
+- expertConditions: 충족한 expert 조건 명시 (2개 이상 필수)
+  ① 교차 참조 ② 법령 연계 ③ 비교 판단 ④ 다단계 추론
+- explanation: 선택지별 정답 근거 + 각 오답 이유 상세 해설
+- concepts: 핵심 개념 2~4개 정리 (학습 자료 역할)
+
+【출력 형식 — q1~q10 (basic·hard)】
 {
-  "session": N,
-  "date": "YYYY-MM-DD",
-  "questions": [
-    {
-      "id": "q1",
-      "category": "B",
-      "categoryName": "서비스 시간·내용",
-      "difficulty": "basic",
-      "type": "choice",
-      "question": "문제 내용",
-      "options": ["① ...", "② ...", "③ ...", "④ ..."],
-      "answer": "② 정답 내용",
-      "basis": "사업안내 원문 인용",
-      "page": "p.6",
-      "note": "보충 설명",
-      "related": [
-        { "title": "분류A", "items": ["항목1", "항목2"] },
-        { "title": "분류B", "highlight": true, "items": ["항목3"] }
-      ]
-    },
-    {
-      "id": "q9",
-      "category": "A",
-      "categoryName": "서비스 대상·자격",
-      "difficulty": "hard",
-      "type": "essay",
-      "question": "서술형 문제 내용",
-      "answer": "모범 답안 내용",
-      "basis": "사업안내 원문 인용",
-      "page": "p.43",
-      "note": "보충 설명"
-    }
+  "id": "q1",
+  "category": "B",
+  "categoryName": "서비스 시간·내용",
+  "perspectiveTag": "B-군별제공시간",
+  "difficulty": "basic",
+  "type": "choice",
+  "question": "문제 내용",
+  "options": ["① ...", "② ...", "③ ...", "④ ..."],
+  "answer": "② **정답 핵심 용어** 포함 정답 내용",
+  "basis": "사업안내 원문 인용",
+  "page": "p.6",
+  "note": "보충 설명",
+  "related": [
+    { "title": "분류A", "items": ["항목1", "항목2"] },
+    { "title": "분류B", "highlight": true, "items": ["주의 항목"] }
   ]
+}
+
+【출력 형식 — q11~q15 (expert)】
+{
+  "id": "q11",
+  "category": "C",
+  "categoryName": "인력·급여·근무",
+  "perspectiveTag": "C-교차참조예시",
+  "difficulty": "expert",
+  "type": "choice",
+  "question": "문제 내용",
+  "options": ["① ...", "② ...", "③ ...", "④ ..."],
+  "answer": "③ **정답 내용**",
+  "basis": "사업안내 p.00 + 서비스제공매뉴얼 p.00",
+  "page": "p.00",
+  "note": "보충 설명",
+  "related": [...],
+  "expertConditions": ["① 교차 참조", "③ 비교 판단"],
+  "explanation": "① 정답 근거: ... / ② 오답: ... / ③ 오답: ... / ④ 오답: ...",
+  "concepts": ["개념1: 설명", "개념2: 설명"]
 }`;
 
 export default function Admin() {

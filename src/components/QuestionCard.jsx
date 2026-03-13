@@ -317,6 +317,20 @@ export default function QuestionCard({
             </div>
           )}
 
+          {/* expert 출제 조건 (expertConditions) */}
+          {q.expertConditions && q.expertConditions.length > 0 && (
+            <div className="mb-2">
+              <span className="text-xs font-semibold text-amber-600">출제 조건</span>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {q.expertConditions.map((cond, ci) => (
+                  <span key={ci} className="text-xs px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                    {cond}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 상세 해설 (explanation) */}
           {q.explanation && (
             <div className="mb-2">
